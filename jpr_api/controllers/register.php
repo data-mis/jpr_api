@@ -1,7 +1,8 @@
 <?php
 
-    function register_patient($_id,$_sex,$_born,$_room,$_age,$_ttl,$_name,$_lname){
+    function register_patient($_id,$_sex,$_born,$_room,$_age,$_ttl,$_name,$_lname,$_type){
         
+        $data_arr = array();
         $_spc = lcname('spc','clin','code',$_room);
         if(empty($_spc) || $_spc==''){
             $_spc='01';
@@ -19,7 +20,18 @@
         $sql_mis_dead = "SELECT * FROM mis WHERE id='".$_id."' and sta='9'";
         $res_dead = dbQuery($sql_mis_dead);
         if(dbNumRows($res_dead) > 0) {
-            echo json_encode(array('MessageCode' => '200','message' => 'ผู้ป่วยเสียชีวิต ลงทะเบียนไม่ได้','status' => FALSE));
+            $obj = new stdClass;
+            $obj->room_Code = '';
+            $obj->txn = '';
+            $obj->hn = '';
+            $obj->cid = '';
+            $obj->date = '';
+            $obj->time = '';
+            $obj->message = 'ผู้ป่วยเสียชีวิต ลงทะเบียนไม่ได้';
+            $obj->status = 'Error!!';
+            array_push($data_arr, $obj);
+
+            echo json_encode(array('MessageCode' => '200','Response' => $data_arr));
         }else{
             /* เช็คว่า id นี้ มีการล้มเวชระเบียนหรือไม่ */
             $sql_mis = "SELECT hn,ttl,name,lname,sex,born,addr,moo,acode,rac,nat,rel,occ,alg,blood,rh,sta,id,type,typem,typen,typei,typex,hmain,hsub,num,types,under,unders 
@@ -47,7 +59,7 @@
                 $alg = $row_mis['alg'];
                 $blood = $row_mis['blood'];
                 $rh = $row_mis['rh'];
-                $type = $row_mis['type'];
+                // $type = $row_mis['type'];
                 $typem = $row_mis['typem'];
                 $typen = $row_mis['typen'];
                 $typei = $row_mis['typei'];
@@ -59,6 +71,12 @@
                 $under = $row_mis['under'];
                 $unders = $row_mis['unders'];
                 $_bill=0;	
+                
+                $type = $_type;
+                $c_type = lcname('code','type','code',$_type);
+                if(empty($c_type)){
+                    $type = 'A1$';
+                }
 
                 $_tall = '';
                 $sql_reg = "SELECT txn,tall FROM reg WHERE hn='".$hn."' ORDER BY date DESC LIMIT 1";
@@ -72,7 +90,18 @@
                 $sql_ipd = "SELECT * FROM ipd WHERE hn='".$hn."'";
                 $res_ipd = dbQuery($sql_ipd);
                 if(dbNumRows($res_ipd) > 0) {
-                    echo json_encode(array('MessageCode' => '200','message' => 'เป็นผู้ป่วยใน ไม่สามารถลงทะเบียนได้','status' => FALSE));
+                    $obj = new stdClass;
+                    $obj->room_Code = '';
+                    $obj->txn = '';
+                    $obj->hn = '';
+                    $obj->cid = '';
+                    $obj->date = '';
+                    $obj->time = '';
+                    $obj->message = 'เป็นผู้ป่วยใน ไม่สามารถลงทะเบียนได้';
+                    $obj->status = 'Error!!';
+                    array_push($data_arr, $obj);
+
+                    echo json_encode(array('MessageCode' => '200','Response' => $data_arr));
                 }else{
                     
                     $upd_mis = "UPDATE mis SET name='".escapetodb($name)."',lname='".escapetodb($lname)."',sex='".escapetodb($sex)."',typem='".escapetodb($typem)."',type='".escapetodb($type)."',
@@ -314,7 +343,17 @@
                             ";
             $res_ins_reg_occ = dbQuery($ins_reg_occ);
 
-            echo json_encode(array('MessageCode' => '200','message' => 'ลงทะเบียนสำเร็จ','status' => TRUE));
+            $obj = new stdClass;
+            $obj->room_Code = $_room;
+            $obj->txn = $_txn;
+            $obj->hn = $hn;
+            $obj->cid = $_id;
+            $obj->date = $date;
+            $obj->time = $time;
+            $obj->message = 'ลงทะเบียนสำเร็จ';
+            $obj->status = 'visit sucess!!';
+            array_push($data_arr, $obj);
+            echo json_encode(array('MessageCode' => '200','Response' => $data_arr));
 
             /* End */
         }
